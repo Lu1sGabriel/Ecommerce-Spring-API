@@ -1,22 +1,22 @@
 package com.luisgoes.ecommerce.ecommerceapi.entities;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.UUID;
 
-
-@Entity
-@Table(name = "tb_user")
 @NoArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+@Entity
+@Table(name = "tb_user")
 public class User implements Serializable {
+
     @Serial
     private static final long serialVersionUID = -4461224141815355852L;
 
@@ -34,8 +34,7 @@ public class User implements Serializable {
     private String password;
 
 
-    public User(UUID id, String name, String email, String phone, String password) {
-        this.id = id;
+    public User(String name, String email, String phone, String password) {
         this.name = name;
         this.email = email;
         this.phone = phone;

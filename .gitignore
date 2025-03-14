@@ -41,3 +41,5 @@ mvnw.cmd
 mvnw
 
 /src/main/resources/profiles
+
+src/main/resources/application-luis.goes.properties

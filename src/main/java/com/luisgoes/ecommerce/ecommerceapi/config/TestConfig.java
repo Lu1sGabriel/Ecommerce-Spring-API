@@ -31,28 +31,22 @@ public class TestConfig implements CommandLineRunner {
         Faker faker = new Faker();
         List<User> userList = new ArrayList<>();
 
-        // Lista de domínios populares
         List<String> emailDomains = Arrays.asList("gmail.com", "hotmail.com", "yahoo.com", "outlook.com", "live.com");
 
         for (int i = 0; i < QUANTITY; i++) {
-            // Gerando dados aleatórios
             String name = faker.name().fullName();
 
-            // Gerando o domínio aleatório a partir da lista
             String domain = emailDomains.get(faker.number().numberBetween(0, emailDomains.size()));
 
-            // Gerando o email concatenando o nome com o domínio aleatório
             String email = name.toLowerCase().replaceAll("[^a-zA-Z0-9]", ".") + "@" + domain;
 
-            // Gerando um número de telefone no formato brasileiro
-            String areaCode = String.format("%02d", faker.number().numberBetween(11, 99)); // Código de área aleatório (11 a 99)
+            String areaCode = String.format("%02d", faker.number().numberBetween(11, 99));
             String phone = String.format("(%s) 9%s-%s", areaCode,
-                    faker.number().digits(4), // 4 primeiros números do celular
-                    faker.number().digits(4)); // 4 últimos números do celular
+                    faker.number().digits(4),
+                    faker.number().digits(4));
 
             String password = faker.internet().password(8, 16);
 
-            // Criando o objeto User e adicionando à lista
             User user = new User(name, email, phone, password);
             userList.add(user);
         }

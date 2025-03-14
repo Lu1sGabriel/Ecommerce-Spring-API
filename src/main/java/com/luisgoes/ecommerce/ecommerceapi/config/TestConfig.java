@@ -15,11 +15,10 @@ import java.util.List;
 @Configuration
 @Profile(value = "test")
 public class TestConfig implements CommandLineRunner {
-    private final static int QUANTITY = 10;
+    private final static int QUANTITY_OF_GENERATION = 10;
 
     @Autowired
     private UserRepository userRepository;
-
 
     @Override
     public void run(String... args) {
@@ -33,7 +32,7 @@ public class TestConfig implements CommandLineRunner {
 
         List<String> emailDomains = Arrays.asList("gmail.com", "hotmail.com", "yahoo.com", "outlook.com", "live.com");
 
-        for (int i = 0; i < QUANTITY; i++) {
+        for (int i = 0; i < QUANTITY_OF_GENERATION; i++) {
             String name = faker.name().fullName();
 
             String domain = emailDomains.get(faker.number().numberBetween(0, emailDomains.size()));

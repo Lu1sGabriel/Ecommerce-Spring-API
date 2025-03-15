@@ -6,88 +6,84 @@ import com.luisgoes.ecommerce.ecommerceapi.entities.User;
 import com.luisgoes.ecommerce.ecommerceapi.repositories.OrderRepository;
 import com.luisgoes.ecommerce.ecommerceapi.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Configuration
-@Profile(value = "test")
+@Profile("test")
 public class TestConfig implements CommandLineRunner {
-    private final static int QUANTITY_OF_GENERATION = 10;
 
-    @Autowired
-    private UserRepository userRepository;
+    private static final int TOTAL_USERS = 10;
+    private static final List<String> EMAIL_DOMAINS = List.of("gmail.com", "hotmail.com", "yahoo.com", "outlook.com", "live.com");
 
-    @Autowired
-    private OrderRepository orderRepository;
+    private final UserRepository userRepository;
+    private final OrderRepository orderRepository;
+    private final Faker faker;
+
+    public TestConfig(UserRepository userRepository, OrderRepository orderRepository) {
+        this.userRepository = userRepository;
+        this.orderRepository = orderRepository;
+        this.faker = new Faker();
+    }
 
     @Override
     public void run(String... args) {
-        var userList = createRandomUsers();
-        userRepository.saveAll(userList);
+        List<User> users = createRandomUsers();
+        userRepository.saveAll(users);
 
-        var orderList = createRandomOrders();
-        orderRepository.saveAll(orderList);
+        List<Order> orders = createRandomOrders(users);
+        orderRepository.saveAll(orders);
     }
 
     private List<User> createRandomUsers() {
-        Faker faker = new Faker();
-        List<User> userList = new ArrayList<>();
-
-        List<String> emailDomains = Arrays.asList("gmail.com", "hotmail.com", "yahoo.com", "outlook.com", "live.com");
-
-        for (int i = 0; i < QUANTITY_OF_GENERATION; i++) {
-            String name = faker.name().fullName();
-
-            String domain = emailDomains.get(faker.number().numberBetween(0, emailDomains.size()));
-
-            String email = name.toLowerCase().replaceAll("[^a-zA-Z0-9]", ".") + "@" + domain;
-
-            String areaCode = String.format("%02d", faker.number().numberBetween(11, 99));
-            String phone = String.format("(%s) 9%s-%s", areaCode,
-                    faker.number().digits(4),
-                    faker.number().digits(4));
-
-            String password = faker.internet().password(8, 16);
-
-            User user = new User(name, email, phone, password);
-            userList.add(user);
-        }
-
-        return userList;
+        return IntStream.range(0, TOTAL_USERS)
+                .mapToObj(i -> {
+                    String fullName = faker.name().fullName();
+                    return new User(
+                            fullName,
+                            generateRandomEmail(fullName),
+                            generateRandomPhone(),
+                            faker.internet().password(8, 16)
+                    );
+                })
+                .collect(Collectors.toList());
     }
 
-    private List<Order> createRandomOrders() {
-        List<Order> orderList = new ArrayList<>();
+    private String generateRandomEmail(String fullName) {
+        String namePart = fullName.toLowerCase()
+                .replaceAll("[^a-zA-Z0-9]", ".")
+                .replaceAll("\\.+", ".");
 
-        List<User> savedUsers = userRepository.findAll();
+        String domain = EMAIL_DOMAINS.get(faker.random().nextInt(EMAIL_DOMAINS.size()));
 
-        if (savedUsers.isEmpty()) {
+        return namePart + "." + "@" + domain;
+    }
+
+    private String generateRandomPhone() {
+        String areaCode = String.format("%02d", faker.number().numberBetween(11, 99));
+        return String.format("(%s) 9%s-%s", areaCode, faker.number().digits(4), faker.number().digits(4));
+    }
+
+    private List<Order> createRandomOrders(List<User> users) {
+        if (users.isEmpty()) {
             throw new EntityNotFoundException("Não foi possível achar usuários no banco de dados.");
         }
 
-        Instant start = Instant.parse("2023-01-01T00:00:00Z");
-        Instant end = Instant.now();
-
-        for (User client : savedUsers) {
-            long randomEpochSecond = ThreadLocalRandom.current()
-                    .nextLong(start.getEpochSecond(), end.getEpochSecond());
-
-            Instant moment = Instant.ofEpochSecond(randomEpochSecond);
-
-            Order order = new Order(moment, client);
-            orderList.add(order);
-        }
-
-        return orderList;
+        return users.stream()
+                .map(user -> new Order(generateRandomInstant(), user))
+                .collect(Collectors.toList());
     }
 
-
+    private Instant generateRandomInstant() {
+        long startEpoch = Instant.parse("2023-01-01T00:00:00Z").getEpochSecond();
+        long endEpoch = Instant.now().getEpochSecond();
+        return Instant.ofEpochSecond(ThreadLocalRandom.current().nextLong(startEpoch, endEpoch));
+    }
 }

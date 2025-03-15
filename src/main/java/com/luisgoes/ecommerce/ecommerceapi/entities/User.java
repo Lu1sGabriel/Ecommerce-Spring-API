@@ -1,8 +1,12 @@
 package com.luisgoes.ecommerce.ecommerceapi.entities;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -34,6 +38,7 @@ public class User implements Serializable {
     @Column(name = "password")
     private String password;
     @Setter(AccessLevel.NONE)
+    @JsonIgnore
     @OneToMany(mappedBy = "client")
     private List<Order> orders = new ArrayList<>();
 

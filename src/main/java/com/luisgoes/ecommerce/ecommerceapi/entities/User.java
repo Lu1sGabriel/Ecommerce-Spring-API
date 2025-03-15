@@ -29,17 +29,22 @@ public class User implements Serializable {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Setter(AccessLevel.NONE)
     private UUID id;
+
     @Column(name = "name")
     private String name;
+
     @Column(name = "email")
     private String email;
+
     @Column(name = "phone")
     private String phone;
+
     @Column(name = "password")
     private String password;
-    @Setter(AccessLevel.NONE)
+
     @JsonIgnore
     @OneToMany(mappedBy = "client")
+    @Setter(AccessLevel.NONE)
     private List<Order> orders = new ArrayList<>();
 
     public User() {

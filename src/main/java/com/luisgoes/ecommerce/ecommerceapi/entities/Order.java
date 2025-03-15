@@ -2,6 +2,7 @@ package com.luisgoes.ecommerce.ecommerceapi.entities;
 
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
@@ -31,8 +32,11 @@ public class Order implements Serializable {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Setter(AccessLevel.NONE)
     private UUID id;
+
     @Column(name = "moment")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "GMT")
     private Instant moment;
+
     @ManyToOne
     @JoinColumn(name = "client_id")
     private User client;

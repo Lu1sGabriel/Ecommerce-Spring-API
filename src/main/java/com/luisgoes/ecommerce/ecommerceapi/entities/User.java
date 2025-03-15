@@ -2,18 +2,20 @@ package com.luisgoes.ecommerce.ecommerceapi.entities;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Table(name = "tb_user")
+@NoArgsConstructor
 @Getter
 @Setter
+@EqualsAndHashCode
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class User implements Serializable {
 
@@ -32,9 +34,10 @@ public class User implements Serializable {
     private String phone;
     @Column(name = "password")
     private String password;
+    @Setter(AccessLevel.NONE)
+    @OneToMany(mappedBy = "client")
+    private List<Order> orders = new ArrayList<>();
 
-    public User() {
-    }
 
     public User(String name, String email, String phone, String password) {
         this.name = name;

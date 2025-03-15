@@ -1,16 +1,21 @@
 package com.luisgoes.ecommerce.ecommerceapi.config;
 
 import com.github.javafaker.Faker;
+import com.luisgoes.ecommerce.ecommerceapi.entities.Order;
 import com.luisgoes.ecommerce.ecommerceapi.entities.User;
+import com.luisgoes.ecommerce.ecommerceapi.repositories.OrderRepository;
 import com.luisgoes.ecommerce.ecommerceapi.repositories.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Configuration
 @Profile(value = "test")
@@ -20,10 +25,16 @@ public class TestConfig implements CommandLineRunner {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private OrderRepository orderRepository;
+
     @Override
     public void run(String... args) {
         var userList = createRandomUsers();
         userRepository.saveAll(userList);
+
+        var orderList = createRandomOrders();
+        orderRepository.saveAll(orderList);
     }
 
     private List<User> createRandomUsers() {
@@ -52,5 +63,31 @@ public class TestConfig implements CommandLineRunner {
 
         return userList;
     }
+
+    private List<Order> createRandomOrders() {
+        List<Order> orderList = new ArrayList<>();
+
+        List<User> savedUsers = userRepository.findAll();
+
+        if (savedUsers.isEmpty()) {
+            throw new EntityNotFoundException("Não foi possível achar usuários no banco de dados.");
+        }
+
+        Instant start = Instant.parse("2023-01-01T00:00:00Z");
+        Instant end = Instant.now();
+
+        for (User client : savedUsers) {
+            long randomEpochSecond = ThreadLocalRandom.current()
+                    .nextLong(start.getEpochSecond(), end.getEpochSecond());
+
+            Instant moment = Instant.ofEpochSecond(randomEpochSecond);
+
+            Order order = new Order(moment, client);
+            orderList.add(order);
+        }
+
+        return orderList;
+    }
+
 
 }

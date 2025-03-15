@@ -12,7 +12,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "tb_user")
-@NoArgsConstructor
 @Getter
 @Setter
 @EqualsAndHashCode
@@ -38,6 +37,8 @@ public class User implements Serializable {
     @OneToMany(mappedBy = "client")
     private List<Order> orders = new ArrayList<>();
 
+    public User() {
+    }
 
     public User(String name, String email, String phone, String password) {
         this.name = name;

@@ -3,7 +3,10 @@ package com.luisgoes.ecommerce.ecommerceapi.entities;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -12,7 +15,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "tb_order")
-@NoArgsConstructor
 @Getter
 @Setter
 @EqualsAndHashCode
@@ -21,6 +23,9 @@ public class Order implements Serializable {
 
     @Serial
     private static final long serialVersionUID = -2433046400464961007L;
+
+    public Order() {
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

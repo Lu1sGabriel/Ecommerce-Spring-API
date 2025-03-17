@@ -1,9 +1,11 @@
 package com.luisgoes.ecommerce.ecommerceapi.config;
 
 import com.github.javafaker.Faker;
+import com.luisgoes.ecommerce.ecommerceapi.entities.Category;
 import com.luisgoes.ecommerce.ecommerceapi.entities.Order;
 import com.luisgoes.ecommerce.ecommerceapi.entities.User;
 import com.luisgoes.ecommerce.ecommerceapi.entities.enums.OrderStatus;
+import com.luisgoes.ecommerce.ecommerceapi.repositories.CategoryRepository;
 import com.luisgoes.ecommerce.ecommerceapi.repositories.OrderRepository;
 import com.luisgoes.ecommerce.ecommerceapi.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -13,7 +15,6 @@ import org.springframework.context.annotation.Profile;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -23,15 +24,18 @@ import java.util.stream.IntStream;
 public class TestConfig implements CommandLineRunner {
 
     private static final int TOTAL_USERS = 10;
+    private static final int TOTAL_CATEGORIES = 5;
     private static final List<String> EMAIL_DOMAINS = List.of("gmail.com", "hotmail.com", "yahoo.com", "outlook.com", "live.com");
 
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
+    private final CategoryRepository categoryRepository;
     private final Faker faker;
 
-    public TestConfig(UserRepository userRepository, OrderRepository orderRepository) {
+    public TestConfig(UserRepository userRepository, OrderRepository orderRepository, CategoryRepository categoryRepository) {
         this.userRepository = userRepository;
         this.orderRepository = orderRepository;
+        this.categoryRepository = categoryRepository;
         this.faker = new Faker();
     }
 
@@ -42,35 +46,36 @@ public class TestConfig implements CommandLineRunner {
 
         List<Order> orders = createRandomOrders(users);
         orderRepository.saveAll(orders);
+
+        List<Category> categories = createRandomCategories();
+        categoryRepository.saveAll(categories);
     }
 
     private List<User> createRandomUsers() {
         return IntStream.range(0, TOTAL_USERS)
-                .mapToObj(i -> {
-                    String fullName = faker.name().fullName();
-                    return new User(
-                            fullName,
-                            generateRandomEmail(fullName),
-                            generateRandomPhone(),
-                            faker.internet().password(8, 16)
-                    );
-                })
+                .mapToObj(i -> new User(
+                        faker.name().fullName(),
+                        generateRandomEmail(faker.name().fullName()),
+                        generateRandomPhone(),
+                        faker.internet().password(8, 16)
+                ))
+                .collect(Collectors.toList());
+    }
+
+    private List<Category> createRandomCategories() {
+        return IntStream.range(0, TOTAL_CATEGORIES)
+                .mapToObj(i -> new Category(faker.commerce().department()))
                 .collect(Collectors.toList());
     }
 
     private String generateRandomEmail(String fullName) {
-        String namePart = fullName.toLowerCase()
-                .replaceAll("[^a-zA-Z0-9]", ".")
-                .replaceAll("\\.+", ".");
-
-        String domain = EMAIL_DOMAINS.get(faker.random().nextInt(EMAIL_DOMAINS.size()));
-
-        return namePart + "." + "@" + domain;
+        return fullName.toLowerCase().replaceAll("[^a-zA-Z0-9]", ".") + "@"
+                + EMAIL_DOMAINS.get(faker.random().nextInt(EMAIL_DOMAINS.size()));
     }
 
     private String generateRandomPhone() {
-        String areaCode = String.format("%02d", faker.number().numberBetween(11, 99));
-        return String.format("(%s) 9%s-%s", areaCode, faker.number().digits(4), faker.number().digits(4));
+        return String.format("(%02d) 9%s-%s", faker.number().numberBetween(11, 99),
+                faker.number().digits(4), faker.number().digits(4));
     }
 
     private List<Order> createRandomOrders(List<User> users) {
@@ -90,7 +95,7 @@ public class TestConfig implements CommandLineRunner {
     }
 
     private OrderStatus getRandomOrderStatus() {
-        return OrderStatus.values()[new Random().nextInt(OrderStatus.values().length)];
+        return OrderStatus.values()[faker.random().nextInt(OrderStatus.values().length)];
     }
 
 }

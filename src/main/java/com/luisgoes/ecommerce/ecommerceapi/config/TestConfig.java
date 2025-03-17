@@ -3,6 +3,7 @@ package com.luisgoes.ecommerce.ecommerceapi.config;
 import com.github.javafaker.Faker;
 import com.luisgoes.ecommerce.ecommerceapi.entities.Order;
 import com.luisgoes.ecommerce.ecommerceapi.entities.User;
+import com.luisgoes.ecommerce.ecommerceapi.entities.enums.OrderStatus;
 import com.luisgoes.ecommerce.ecommerceapi.repositories.OrderRepository;
 import com.luisgoes.ecommerce.ecommerceapi.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -12,6 +13,7 @@ import org.springframework.context.annotation.Profile;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -77,7 +79,7 @@ public class TestConfig implements CommandLineRunner {
         }
 
         return users.stream()
-                .map(user -> new Order(generateRandomInstant(), user))
+                .map(user -> new Order(generateRandomInstant(), getRandomOrderStatus(), user))
                 .collect(Collectors.toList());
     }
 
@@ -85,6 +87,10 @@ public class TestConfig implements CommandLineRunner {
         long startEpoch = Instant.parse("2023-01-01T00:00:00Z").getEpochSecond();
         long endEpoch = Instant.now().getEpochSecond();
         return Instant.ofEpochSecond(ThreadLocalRandom.current().nextLong(startEpoch, endEpoch));
+    }
+
+    private OrderStatus getRandomOrderStatus() {
+        return OrderStatus.values()[new Random().nextInt(OrderStatus.values().length)];
     }
 
 }

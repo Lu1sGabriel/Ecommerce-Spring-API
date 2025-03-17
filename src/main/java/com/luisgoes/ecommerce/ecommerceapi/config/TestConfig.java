@@ -17,10 +17,9 @@ import org.springframework.context.annotation.Profile;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Configuration
 @Profile("test")
@@ -35,7 +34,8 @@ public class TestConfig implements CommandLineRunner {
     private final ProductRepository productRepository;
     private final Faker faker;
 
-    public TestConfig(UserRepository userRepository, OrderRepository orderRepository, CategoryRepository categoryRepository, ProductRepository productRepository) {
+    public TestConfig(UserRepository userRepository, OrderRepository orderRepository,
+                      CategoryRepository categoryRepository, ProductRepository productRepository) {
         this.userRepository = userRepository;
         this.orderRepository = orderRepository;
         this.categoryRepository = categoryRepository;
@@ -45,105 +45,93 @@ public class TestConfig implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // Criar e salvar usuários
-        List<User> users = createRandomUsers();
+        List<User> users = generateUsers();
         userRepository.saveAll(users);
 
-        // Criar e salvar pedidos
-        List<Order> orders = createRandomOrders(users);
-        orderRepository.saveAll(orders);
-
-        // Criar e salvar categorias
-        List<Category> categories = createFixedCategories();
-        categoryRepository.saveAll(categories);
-
-        // Criar e salvar produtos
-        List<Product> products = createFixedProducts(categories);
-        productRepository.saveAll(products);
+        orderRepository.saveAll(generateOrders(users));
+        categoryRepository.saveAll(generateCategories());
+        productRepository.saveAll(generateProducts());
     }
 
-    private List<User> createRandomUsers() {
-        return java.util.stream.IntStream.range(0, TOTAL_USERS)
+    private List<User> generateUsers() {
+        return IntStream.range(0, TOTAL_USERS)
                 .mapToObj(i -> {
                     String fullName = faker.name().fullName();
-                    return new User(
-                            fullName,
-                            generateRandomEmail(fullName),
-                            generateRandomPhone(),
-                            faker.internet().password(8, 12)
-                    );
+                    return new User(fullName, generateEmail(fullName), generatePhoneNumber(), faker.internet().password(8, 12));
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    private List<Category> createFixedCategories() {
-        List<Category> categories = new ArrayList<>();
-        categories.add(new Category("Books"));
-        categories.add(new Category("Electronics"));
-        categories.add(new Category("Clothing"));
-        return categories;
-    }
-
-    private List<Product> createFixedProducts(List<Category> categories) {
-        List<Product> products = new ArrayList<>();
-
-        Product book = new Product("Java Programming", "A comprehensive guide to Java programming.", new BigDecimal("49.99"), "book-image.jpg");
-        book.getCategories().add(categories.get(0)); // Books
-        book.getCategories().add(categories.get(1)); // Electronics
-        products.add(book);
-
-        Product laptop = new Product("Laptop", "High performance laptop for programming and gaming.", new BigDecimal("999.99"), "laptop-image.jpg");
-        laptop.getCategories().add(categories.get(1)); // Electronics
-        laptop.getCategories().add(categories.get(2)); // Clothing
-        products.add(laptop);
-
-        Product tshirt = new Product("Graphic T-Shirt", "Comfortable graphic t-shirt with tech design.", new BigDecimal("19.99"), "tshirt-image.jpg");
-        tshirt.getCategories().add(categories.get(2)); // Clothing
-        products.add(tshirt);
-
-        Product smartphone = new Product("Smartphone", "Latest model smartphone with great features.", new BigDecimal("799.99"), "smartphone-image.jpg");
-        smartphone.getCategories().add(categories.get(1)); // Electronics
-        smartphone.getCategories().add(categories.get(2)); // Clothing
-        products.add(smartphone);
-
-        Product novel = new Product("Mystery Novel", "A thrilling mystery novel for all book lovers.", new BigDecimal("15.99"), "novel-image.jpg");
-        novel.getCategories().add(categories.get(0)); // Books
-        products.add(novel);
-
-        Product jacket = new Product("Leather Jacket", "Stylish leather jacket for all seasons.", new BigDecimal("199.99"), "jacket-image.jpg");
-        jacket.getCategories().add(categories.get(2)); // Clothing
-        products.add(jacket);
-
-        return products;
-    }
-
-    private String generateRandomEmail(String fullName) {
-        return fullName.toLowerCase().replaceAll("[^a-zA-Z0-9]", ".") + "@"
-                + EMAIL_DOMAINS.get(faker.random().nextInt(EMAIL_DOMAINS.size()));
-    }
-
-    private String generateRandomPhone() {
-        return String.format("(%02d) 9%s-%s", ThreadLocalRandom.current().nextInt(11, 99),
-                ThreadLocalRandom.current().nextInt(1000, 9999), ThreadLocalRandom.current().nextInt(1000, 9999));
-    }
-
-    private List<Order> createRandomOrders(List<User> users) {
+    private List<Order> generateOrders(List<User> users) {
         if (users.isEmpty()) {
-            throw new EntityNotFoundException("Não foi possível achar usuários no banco de dados.");
+            throw new EntityNotFoundException("Nenhum usuário encontrado para gerar pedidos.");
         }
 
         return users.stream()
-                .map(user -> new Order(generateRandomInstant(), getRandomOrderStatus(), user))
-                .collect(Collectors.toList());
+                .map(user -> new Order(randomInstant(), randomOrderStatus(), user))
+                .toList();
     }
 
-    private Instant generateRandomInstant() {
+    private List<Category> generateCategories() {
+        return List.of(
+                new Category("Books"),
+                new Category("Electronics"),
+                new Category("Clothing"),
+                new Category("Home & Kitchen"),
+                new Category("Toys"),
+                new Category("Sports & Outdoors")
+        );
+    }
+
+    private List<Product> generateProducts() {
+        List<Category> categories = categoryRepository.findAll();
+        if (categories.isEmpty()) {
+            throw new EntityNotFoundException("Nenhuma categoria encontrada.");
+        }
+
+        return List.of(
+                createProduct("Java Programming", "A comprehensive guide to Java.", new BigDecimal("49.99"), "book-image.jpg", categories.get(0)),
+                createProduct("Mystery Novel", "Thrilling mystery novel.", new BigDecimal("15.99"), "novel-image.jpg", categories.get(0)),
+                createProduct("Laptop", "High performance laptop.", new BigDecimal("999.99"), "laptop-image.jpg", categories.get(1)),
+                createProduct("Smartphone", "Latest model smartphone.", new BigDecimal("799.99"), "smartphone-image.jpg", categories.get(1)),
+                createProduct("Wireless Headphones", "Noise-canceling wireless headphones.", new BigDecimal("199.99"), "headphones-image.jpg", categories.get(1)),
+                createProduct("Graphic T-Shirt", "Tech design t-shirt.", new BigDecimal("19.99"), "tshirt-image.jpg", categories.get(2)),
+                createProduct("Leather Jacket", "Stylish leather jacket.", new BigDecimal("199.99"), "jacket-image.jpg", categories.get(2)),
+                createProduct("Coffee Maker", "Automatic coffee maker.", new BigDecimal("89.99"), "coffee-maker-image.jpg", categories.get(3)),
+                createProduct("Blender", "High-speed kitchen blender.", new BigDecimal("69.99"), "blender-image.jpg", categories.get(3)),
+                createProduct("Lego Set", "Creative building block set.", new BigDecimal("59.99"), "lego-image.jpg", categories.get(4)),
+                createProduct("RC Car", "Remote control car with high speed.", new BigDecimal("79.99"), "rc-car-image.jpg", categories.get(4)),
+                createProduct("Tennis Racket", "Professional tennis racket.", new BigDecimal("149.99"), "racket-image.jpg", categories.get(5)),
+                createProduct("Camping Tent", "Waterproof camping tent for 4 people.", new BigDecimal("249.99"), "tent-image.jpg", categories.get(5))
+        );
+    }
+
+    private Product createProduct(String name, String description, BigDecimal price, String imgUrl, Category... categories) {
+        Product product = new Product(name, description, price, imgUrl);
+        product.getCategories().addAll(List.of(categories));
+        return product;
+    }
+
+    private String generateEmail(String fullName) {
+        String formattedName = fullName.toLowerCase().replaceAll("[^a-zA-Z0-9]", ".");
+        String domain = EMAIL_DOMAINS.get(faker.random().nextInt(EMAIL_DOMAINS.size()));
+        return formattedName + "@" + domain;
+    }
+
+    private String generatePhoneNumber() {
+        return String.format("(%02d) 9%d-%d",
+                ThreadLocalRandom.current().nextInt(11, 99),
+                ThreadLocalRandom.current().nextInt(1000, 9999),
+                ThreadLocalRandom.current().nextInt(1000, 9999));
+    }
+
+    private Instant randomInstant() {
         long startEpoch = Instant.parse("2023-01-01T00:00:00Z").getEpochSecond();
         long endEpoch = Instant.now().getEpochSecond();
         return Instant.ofEpochSecond(ThreadLocalRandom.current().nextLong(startEpoch, endEpoch));
     }
 
-    private OrderStatus getRandomOrderStatus() {
+    private OrderStatus randomOrderStatus() {
         return OrderStatus.values()[ThreadLocalRandom.current().nextInt(OrderStatus.values().length)];
     }
 

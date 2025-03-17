@@ -3,69 +3,118 @@ package com.luisgoes.ecommerce.ecommerceapi.config;
 import com.github.javafaker.Faker;
 import com.luisgoes.ecommerce.ecommerceapi.entities.Category;
 import com.luisgoes.ecommerce.ecommerceapi.entities.Order;
+import com.luisgoes.ecommerce.ecommerceapi.entities.Product;
 import com.luisgoes.ecommerce.ecommerceapi.entities.User;
 import com.luisgoes.ecommerce.ecommerceapi.entities.enums.OrderStatus;
 import com.luisgoes.ecommerce.ecommerceapi.repositories.CategoryRepository;
 import com.luisgoes.ecommerce.ecommerceapi.repositories.OrderRepository;
+import com.luisgoes.ecommerce.ecommerceapi.repositories.ProductRepository;
 import com.luisgoes.ecommerce.ecommerceapi.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Configuration
 @Profile("test")
 public class TestConfig implements CommandLineRunner {
 
     private static final int TOTAL_USERS = 10;
-    private static final int TOTAL_CATEGORIES = 5;
     private static final List<String> EMAIL_DOMAINS = List.of("gmail.com", "hotmail.com", "yahoo.com", "outlook.com", "live.com");
 
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
     private final Faker faker;
 
-    public TestConfig(UserRepository userRepository, OrderRepository orderRepository, CategoryRepository categoryRepository) {
+    public TestConfig(UserRepository userRepository, OrderRepository orderRepository, CategoryRepository categoryRepository, ProductRepository productRepository) {
         this.userRepository = userRepository;
         this.orderRepository = orderRepository;
         this.categoryRepository = categoryRepository;
+        this.productRepository = productRepository;
         this.faker = new Faker();
     }
 
     @Override
     public void run(String... args) {
+        // Criar e salvar usuários
         List<User> users = createRandomUsers();
         userRepository.saveAll(users);
 
+        // Criar e salvar pedidos
         List<Order> orders = createRandomOrders(users);
         orderRepository.saveAll(orders);
 
-        List<Category> categories = createRandomCategories();
+        // Criar e salvar categorias
+        List<Category> categories = createFixedCategories();
         categoryRepository.saveAll(categories);
+
+        // Criar e salvar produtos
+        List<Product> products = createFixedProducts(categories);
+        productRepository.saveAll(products);
     }
 
     private List<User> createRandomUsers() {
-        return IntStream.range(0, TOTAL_USERS)
-                .mapToObj(i -> new User(
-                        faker.name().fullName(),
-                        generateRandomEmail(faker.name().fullName()),
-                        generateRandomPhone(),
-                        faker.internet().password(8, 16)
-                ))
+        return java.util.stream.IntStream.range(0, TOTAL_USERS)
+                .mapToObj(i -> {
+                    String fullName = faker.name().fullName();
+                    return new User(
+                            fullName,
+                            generateRandomEmail(fullName),
+                            generateRandomPhone(),
+                            faker.internet().password(8, 12)
+                    );
+                })
                 .collect(Collectors.toList());
     }
 
-    private List<Category> createRandomCategories() {
-        return IntStream.range(0, TOTAL_CATEGORIES)
-                .mapToObj(i -> new Category(faker.commerce().department()))
-                .collect(Collectors.toList());
+    private List<Category> createFixedCategories() {
+        List<Category> categories = new ArrayList<>();
+        categories.add(new Category("Books"));
+        categories.add(new Category("Electronics"));
+        categories.add(new Category("Clothing"));
+        return categories;
+    }
+
+    private List<Product> createFixedProducts(List<Category> categories) {
+        List<Product> products = new ArrayList<>();
+
+        Product book = new Product("Java Programming", "A comprehensive guide to Java programming.", new BigDecimal("49.99"), "book-image.jpg");
+        book.getCategories().add(categories.get(0)); // Books
+        book.getCategories().add(categories.get(1)); // Electronics
+        products.add(book);
+
+        Product laptop = new Product("Laptop", "High performance laptop for programming and gaming.", new BigDecimal("999.99"), "laptop-image.jpg");
+        laptop.getCategories().add(categories.get(1)); // Electronics
+        laptop.getCategories().add(categories.get(2)); // Clothing
+        products.add(laptop);
+
+        Product tshirt = new Product("Graphic T-Shirt", "Comfortable graphic t-shirt with tech design.", new BigDecimal("19.99"), "tshirt-image.jpg");
+        tshirt.getCategories().add(categories.get(2)); // Clothing
+        products.add(tshirt);
+
+        Product smartphone = new Product("Smartphone", "Latest model smartphone with great features.", new BigDecimal("799.99"), "smartphone-image.jpg");
+        smartphone.getCategories().add(categories.get(1)); // Electronics
+        smartphone.getCategories().add(categories.get(2)); // Clothing
+        products.add(smartphone);
+
+        Product novel = new Product("Mystery Novel", "A thrilling mystery novel for all book lovers.", new BigDecimal("15.99"), "novel-image.jpg");
+        novel.getCategories().add(categories.get(0)); // Books
+        products.add(novel);
+
+        Product jacket = new Product("Leather Jacket", "Stylish leather jacket for all seasons.", new BigDecimal("199.99"), "jacket-image.jpg");
+        jacket.getCategories().add(categories.get(2)); // Clothing
+        products.add(jacket);
+
+        return products;
     }
 
     private String generateRandomEmail(String fullName) {
@@ -74,8 +123,8 @@ public class TestConfig implements CommandLineRunner {
     }
 
     private String generateRandomPhone() {
-        return String.format("(%02d) 9%s-%s", faker.number().numberBetween(11, 99),
-                faker.number().digits(4), faker.number().digits(4));
+        return String.format("(%02d) 9%s-%s", ThreadLocalRandom.current().nextInt(11, 99),
+                ThreadLocalRandom.current().nextInt(1000, 9999), ThreadLocalRandom.current().nextInt(1000, 9999));
     }
 
     private List<Order> createRandomOrders(List<User> users) {
@@ -95,7 +144,7 @@ public class TestConfig implements CommandLineRunner {
     }
 
     private OrderStatus getRandomOrderStatus() {
-        return OrderStatus.values()[faker.random().nextInt(OrderStatus.values().length)];
+        return OrderStatus.values()[ThreadLocalRandom.current().nextInt(OrderStatus.values().length)];
     }
 
 }

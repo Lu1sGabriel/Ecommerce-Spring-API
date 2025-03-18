@@ -1,5 +1,7 @@
 package com.luisgoes.ecommerce.ecommerceapi.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -21,7 +23,7 @@ import java.util.UUID;
 public class Product implements Serializable {
 
     @Serial
-    private static final long serialVersionUID = -5834893502247150799L;
+    private static final long serialVersionUID = -3254281190081597518L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -47,6 +49,10 @@ public class Product implements Serializable {
     @Setter(AccessLevel.NONE)
     private Set<Category> categories = new HashSet<>();
 
+    @OneToMany(mappedBy = "id.product")
+    @Setter(AccessLevel.NONE)
+    @JsonIgnore
+    private Set<OrderItem> items = new HashSet<>();
 
     public Product(String name, String description, BigDecimal price, String imageUrl) {
         this.name = name;

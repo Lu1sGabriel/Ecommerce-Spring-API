@@ -1,11 +1,14 @@
 package com.luisgoes.ecommerce.ecommerceapi.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.luisgoes.ecommerce.ecommerceapi.entities.primaryKeys.OrderItemPK;
-import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -16,20 +19,17 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode
 public class OrderItem implements Serializable {
 
     @Serial
-    private static final long serialVersionUID = -3779640313301681361L;
+    private static final long serialVersionUID = 1776564555121607930L;
 
     @EmbeddedId
     @Setter(AccessLevel.NONE)
-    private OrderItemPK id;
+    private OrderItemPK id = new OrderItemPK();
 
-    @Column(name = "quantity")
     private Integer quantity;
 
-    @Column(name = "price")
     private BigDecimal price;
 
     public OrderItem(Order order, Product product, Integer quantity, BigDecimal price) {
@@ -39,6 +39,7 @@ public class OrderItem implements Serializable {
         this.price = price;
     }
 
+    @JsonIgnore
     public Order getOrder() {
         return id.getOrder();
     }

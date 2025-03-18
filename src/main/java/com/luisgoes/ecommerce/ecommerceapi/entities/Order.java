@@ -2,6 +2,7 @@ package com.luisgoes.ecommerce.ecommerceapi.entities;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.luisgoes.ecommerce.ecommerceapi.entities.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,7 +10,9 @@ import lombok.*;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -38,6 +41,10 @@ public class Order implements Serializable {
     @ManyToOne
     @JoinColumn(name = "client_id")
     private User client;
+
+    @OneToMany(mappedBy = "id.order")
+    @Setter(AccessLevel.NONE)
+    private Set<OrderItem> items = new HashSet<>();
 
     public Order(Instant moment, OrderStatus orderStatus, User client) {
         this.moment = moment;

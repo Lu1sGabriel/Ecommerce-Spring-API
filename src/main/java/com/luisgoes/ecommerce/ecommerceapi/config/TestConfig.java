@@ -1,15 +1,9 @@
 package com.luisgoes.ecommerce.ecommerceapi.config;
 
 import com.github.javafaker.Faker;
-import com.luisgoes.ecommerce.ecommerceapi.entities.Category;
-import com.luisgoes.ecommerce.ecommerceapi.entities.Order;
-import com.luisgoes.ecommerce.ecommerceapi.entities.Product;
-import com.luisgoes.ecommerce.ecommerceapi.entities.User;
+import com.luisgoes.ecommerce.ecommerceapi.entities.*;
 import com.luisgoes.ecommerce.ecommerceapi.entities.enums.OrderStatus;
-import com.luisgoes.ecommerce.ecommerceapi.repositories.CategoryRepository;
-import com.luisgoes.ecommerce.ecommerceapi.repositories.OrderRepository;
-import com.luisgoes.ecommerce.ecommerceapi.repositories.ProductRepository;
-import com.luisgoes.ecommerce.ecommerceapi.repositories.UserRepository;
+import com.luisgoes.ecommerce.ecommerceapi.repositories.*;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +13,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Configuration
@@ -32,14 +27,17 @@ public class TestConfig implements CommandLineRunner {
     private final OrderRepository orderRepository;
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
+    private final OrderItemRepository orderItemRepository;
     private final Faker faker;
 
     public TestConfig(UserRepository userRepository, OrderRepository orderRepository,
-                      CategoryRepository categoryRepository, ProductRepository productRepository) {
+                      CategoryRepository categoryRepository, ProductRepository productRepository,
+                      OrderItemRepository orderItemRepository) {
         this.userRepository = userRepository;
         this.orderRepository = orderRepository;
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
+        this.orderItemRepository = orderItemRepository;
         this.faker = new Faker();
     }
 
@@ -48,9 +46,14 @@ public class TestConfig implements CommandLineRunner {
         List<User> users = generateUsers();
         userRepository.saveAll(users);
 
-        orderRepository.saveAll(generateOrders(users));
+        List<Order> orders = generateOrders(users);
+        orderRepository.saveAll(orders);
+
         categoryRepository.saveAll(generateCategories());
-        productRepository.saveAll(generateProducts());
+        List<Product> products = generateProducts();
+        productRepository.saveAll(products);
+
+        orderItemRepository.saveAll(generateOrderItems(orders, products));
     }
 
     private List<User> generateUsers() {
@@ -110,6 +113,19 @@ public class TestConfig implements CommandLineRunner {
         Product product = new Product(name, description, price, imgUrl);
         product.getCategories().addAll(List.of(categories));
         return product;
+    }
+
+    private List<OrderItem> generateOrderItems(List<Order> orders, List<Product> products) {
+        return orders.stream()
+                .flatMap(order -> products.stream()
+                        .limit(ThreadLocalRandom.current().nextInt(1, 4))
+                        .map(product -> createOrderItem(order, product)))
+                .collect(Collectors.toList());
+    }
+
+    private OrderItem createOrderItem(Order order, Product product) {
+        int quantity = ThreadLocalRandom.current().nextInt(1, 6);
+        return new OrderItem(order, product, quantity, product.getPrice());
     }
 
     private String generateEmail(String fullName) {

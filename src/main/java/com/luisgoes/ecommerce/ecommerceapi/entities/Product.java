@@ -44,6 +44,7 @@ public class Product implements Serializable {
     @JoinTable(name = "tb_product_category",
             joinColumns = @JoinColumn(name = "product_id"),
             inverseJoinColumns = @JoinColumn(name = "category_id"))
+    @Setter(AccessLevel.NONE)
     private Set<Category> categories = new HashSet<>();
 
 

@@ -8,7 +8,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.proxy.HibernateProxy;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -35,17 +34,14 @@ public class OrderItemPK implements Serializable {
     @Override
     public final boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null) return false;
-        Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
-        Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
-        if (thisEffectiveClass != oEffectiveClass) return false;
+        if (o == null || getClass() != o.getClass()) return false;
         OrderItemPK that = (OrderItemPK) o;
-        return getOrder() != null && Objects.equals(getOrder(), that.getOrder())
-                && getProduct() != null && Objects.equals(getProduct(), that.getProduct());
+        return Objects.equals(order, that.order) && Objects.equals(product, that.product);
     }
 
     @Override
     public final int hashCode() {
         return Objects.hash(order, product);
     }
+
 }
